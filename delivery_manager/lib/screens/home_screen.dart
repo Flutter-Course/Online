@@ -61,26 +61,43 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  OrderItem(
-                    price: 50,
-                    deliveryMan: 'Muhammed Aly',
-                    time: '2:00PM',
+                  Expanded(
+                    child: ListView(
+                      physics: BouncingScrollPhysics(),
+                      children: [
+                        OrderItem(
+                          price: 50,
+                          deliveryMan: 'Muhammed Aly',
+                          time: '2:00PM',
+                        ),
+                        OrderItem(
+                          price: 500,
+                          deliveryMan: 'Toka Ehab',
+                          time: '3:00PM',
+                        ),
+                        OrderItem(
+                          price: 15,
+                          deliveryMan: 'Ahmed Aly',
+                          time: '4:00PM',
+                        ),
+                        OrderItem(
+                          price: 15,
+                          deliveryMan: 'Ahmed Aly',
+                          time: '4:00PM',
+                        ),
+                        OrderItem(
+                          price: 15,
+                          deliveryMan: 'Ahmed Aly',
+                          time: '4:00PM',
+                        ),
+                        OrderItem(
+                          price: 15,
+                          deliveryMan: 'Ahmed Aly',
+                          time: '4:00PM',
+                        ),
+                      ],
+                    ),
                   ),
-                  OrderItem(
-                    price: 500,
-                    deliveryMan: 'Toka Ehab',
-                    time: '3:00PM',
-                  ),
-                  OrderItem(
-                    price: 15,
-                    deliveryMan: 'Ahmed Aly',
-                    time: '4:00PM',
-                  ),
-                  // OrderItem(
-                  //   price: 15,
-                  //   deliveryMan: 'Ahmed Aly',
-                  //   time: '4:00PM',
-                  // ),
                 ],
               ),
             ),
