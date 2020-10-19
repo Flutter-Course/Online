@@ -1,5 +1,10 @@
+import 'package:delivery_manager/widgets/background_container.dart';
+import 'package:delivery_manager/widgets/chart.dart';
+import 'package:delivery_manager/widgets/homescreen_title.dart';
 import 'package:delivery_manager/widgets/order_item.dart';
+import 'package:delivery_manager/widgets/sticky_header_head.dart';
 import 'package:flutter/material.dart';
+import 'package:sticky_headers/sticky_headers.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,95 +12,112 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  ScrollController scrollController = ScrollController();
+  bool showUpButton = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          Container(
-            color: Theme.of(context).primaryColor,
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height * 0.3,
-          ),
+          BackgroundContainer(),
           SafeArea(
             child: Container(
               width: MediaQuery.of(context).size.width,
               child: Column(
                 children: [
-                  Container(
-                    margin: EdgeInsets.symmetric(
-                      vertical: MediaQuery.of(context).size.height * 0.05,
-                    ),
-                    child: Text(
-                      'Delivery Manager',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 5,
-                    margin: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width * 0.05,
-                    ).add(
-                      EdgeInsets.only(
-                        bottom: MediaQuery.of(context).size.height * 0.04,
-                      ),
-                    ),
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.3,
-                      width: double.infinity,
-                      child: Center(
-                        child: Text(
-                          'No Orders Yet',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  HomeScreenTitle(),
+                  Chart(),
                   Expanded(
-                    child: ListView(
-                      physics: BouncingScrollPhysics(),
-                      children: [
-                        OrderItem(
-                          price: 50,
-                          deliveryMan: 'Muhammed Aly',
-                          time: '2:00PM',
+                    child: NotificationListener<ScrollUpdateNotification>(
+                      onNotification: (notification) {
+                        if (notification.metrics.pixels > 40 &&
+                            showUpButton == false) {
+                          setState(() {
+                            showUpButton = true;
+                          });
+                        } else if (notification.metrics.pixels <= 40 &&
+                            showUpButton == true) {
+                          setState(() {
+                            showUpButton = false;
+                          });
+                        }
+                        return true;
+                      },
+                      child: ListView(
+                        controller: scrollController,
+                        padding: EdgeInsets.only(
+                          bottom: kFloatingActionButtonMargin + 56,
                         ),
-                        OrderItem(
-                          price: 500,
-                          deliveryMan: 'Toka Ehab',
-                          time: '3:00PM',
-                        ),
-                        OrderItem(
-                          price: 15,
-                          deliveryMan: 'Ahmed Aly',
-                          time: '4:00PM',
-                        ),
-                        OrderItem(
-                          price: 15,
-                          deliveryMan: 'Ahmed Aly',
-                          time: '4:00PM',
-                        ),
-                        OrderItem(
-                          price: 15,
-                          deliveryMan: 'Ahmed Aly',
-                          time: '4:00PM',
-                        ),
-                        OrderItem(
-                          price: 15,
-                          deliveryMan: 'Ahmed Aly',
-                          time: '4:00PM',
-                        ),
-                      ],
+                        physics: BouncingScrollPhysics(),
+                        children: [
+                          StickyHeader(
+                            header: StickyHeaderHead('19/10/2020'),
+                            content: Column(
+                              children: [
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                              ],
+                            ),
+                          ),
+                          StickyHeader(
+                            header: StickyHeaderHead('18/10/2020'),
+                            content: Column(
+                              children: [
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                              ],
+                            ),
+                          ),
+                          StickyHeader(
+                            header: StickyHeaderHead('17/10/2020'),
+                            content: Column(
+                              children: [
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                                OrderItem(
+                                  price: 15,
+                                  deliveryMan: 'Ahmed Aly',
+                                  time: '4:00PM',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -104,10 +126,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).primaryColor,
-        child: Icon(Icons.add),
-        onPressed: () {},
+      floatingActionButton: Container(
+        margin: EdgeInsets.only(left: 2 * kFloatingActionButtonMargin),
+        child: Row(
+          mainAxisAlignment: (showUpButton)
+              ? MainAxisAlignment.spaceBetween
+              : MainAxisAlignment.end,
+          children: [
+            if (showUpButton)
+              FloatingActionButton(
+                mini: true,
+                backgroundColor: Colors.grey,
+                child: Icon(Icons.keyboard_arrow_up),
+                onPressed: () {
+                  scrollController.jumpTo(0.0);
+                },
+              ),
+            FloatingActionButton(
+              backgroundColor: Theme.of(context).primaryColor,
+              child: Icon(Icons.add),
+              onPressed: () {},
+            ),
+          ],
+        ),
       ),
     );
   }
