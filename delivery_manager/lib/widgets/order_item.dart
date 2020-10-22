@@ -1,10 +1,11 @@
+import 'package:delivery_manager/models/order.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class OrderItem extends StatelessWidget {
-  final double price;
-  final String deliveryMan, time;
-  OrderItem(
-      {@required this.price, @required this.deliveryMan, @required this.time});
+  final Order order;
+  final Function remove;
+  OrderItem(this.order, this.remove);
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -29,20 +30,22 @@ class OrderItem extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.all(5.0),
                 child: Text(
-                  '$price\$',
+                  '${order.price.toStringAsFixed(2)}\$',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
             ),
           ),
-          title: Text(deliveryMan),
-          subtitle: Text(time),
+          title: Text(order.deliveryMan),
+          subtitle: Text(DateFormat('hh:mm a').format(order.orderDate)),
           trailing: IconButton(
             icon: Icon(
               Icons.delete,
               color: Colors.red,
             ),
-            onPressed: () {},
+            onPressed: () {
+              remove(DateFormat('yyyyMMdd').format(order.orderDate), order);
+            },
           ),
         ),
       ),

@@ -1,9 +1,14 @@
+import 'dart:collection';
+import 'dart:math';
+
+import 'package:delivery_manager/models/order.dart';
 import 'package:delivery_manager/widgets/background_container.dart';
 import 'package:delivery_manager/widgets/chart.dart';
 import 'package:delivery_manager/widgets/homescreen_title.dart';
 import 'package:delivery_manager/widgets/order_item.dart';
 import 'package:delivery_manager/widgets/sticky_header_head.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sticky_headers/sticky_headers.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,8 +17,57 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  SplayTreeMap<String, Map<String, dynamic>> orders =
+      SplayTreeMap<String, Map<String, dynamic>>((String a, String b) {
+    return -a.compareTo(b);
+  });
   ScrollController scrollController = ScrollController();
   bool showUpButton = false;
+  List<String> deliveryMen = ['Muhammed Aly', 'Toka Ehab', 'Ahmed Aly'];
+
+  int compareTwoOrders(Order a, Order b) {
+    return -a.orderDate.compareTo(b.orderDate);
+  }
+
+  void removeOrder(String key, Order order) {
+    setState(() {
+      (orders[key]['list'] as SplayTreeSet<Order>).remove(order);
+      if (orders[key]['list'].isEmpty) {
+        orders.remove(key);
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final ordersList = List.generate(12, (index) {
+      return Order(
+        id: index,
+        deliveryMan: deliveryMen[Random().nextInt(3)],
+        price: Random().nextDouble() * 500,
+        orderDate: DateTime.now().subtract(
+          Duration(
+            days: Random().nextInt(12),
+            hours: Random().nextInt(24),
+            minutes: Random().nextInt(60),
+          ),
+        ),
+      );
+    });
+
+    ordersList.forEach((element) {
+      final key = DateFormat('yyyyMMdd').format(element.orderDate);
+      if (!orders.containsKey(key)) {
+        orders[key] = Map<String, dynamic>();
+        orders[key]['date'] =
+            DateFormat('EEEE, dd/MM/yyyy').format(element.orderDate);
+        orders[key]['list'] = SplayTreeSet<Order>(compareTwoOrders);
+      }
+      orders[key]['list'].add(element);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,80 +97,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                         return true;
                       },
-                      child: ListView(
+                      child: ListView.builder(
                         controller: scrollController,
                         padding: EdgeInsets.only(
                           bottom: kFloatingActionButtonMargin + 56,
                         ),
                         physics: BouncingScrollPhysics(),
-                        children: [
-                          StickyHeader(
-                            header: StickyHeaderHead('19/10/2020'),
+                        itemCount: orders.length,
+                        itemBuilder: (context, index) {
+                          List<String> keys = orders.keys.toList();
+                          String key = keys[index];
+                          String date = orders[key]['date'];
+                          SplayTreeSet<Order> list = orders[key]['list'];
+                          return StickyHeader(
+                            header: StickyHeaderHead(date),
                             content: Column(
-                              children: [
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                              ],
+                              children: list.map((element) {
+                                return OrderItem(element, removeOrder);
+                              }).toList(),
                             ),
-                          ),
-                          StickyHeader(
-                            header: StickyHeaderHead('18/10/2020'),
-                            content: Column(
-                              children: [
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                              ],
-                            ),
-                          ),
-                          StickyHeader(
-                            header: StickyHeaderHead('17/10/2020'),
-                            content: Column(
-                              children: [
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                                OrderItem(
-                                  price: 15,
-                                  deliveryMan: 'Ahmed Aly',
-                                  time: '4:00PM',
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ),
