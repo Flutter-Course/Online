@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:delivery_manager/models/order.dart';
+import 'package:delivery_manager/widgets/add_order_sheet.dart';
 import 'package:delivery_manager/widgets/background_container.dart';
 import 'package:delivery_manager/widgets/chart.dart';
 import 'package:delivery_manager/widgets/homescreen_title.dart';
@@ -21,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
       SplayTreeMap<String, Map<String, dynamic>>((String a, String b) {
     return -a.compareTo(b);
   });
-  ScrollController scrollController = ScrollController();
+  ScrollController scrollController;
   bool showUpButton = false;
   List<String> deliveryMen = ['Muhammed Aly', 'Toka Ehab', 'Ahmed Aly'];
 
@@ -38,12 +39,27 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void addOrder(String key, Order order) {
+    Navigator.of(context).pop();
+    setState(() {
+      if (orders.containsKey(key)) {
+        orders[key]['list'].add(order);
+      } else {
+        orders[key] = Map<String, dynamic>();
+        orders[key]['date'] =
+            DateFormat('EEEE, dd/MM/yyyy').format(order.orderDate);
+        orders[key]['list'] = SplayTreeSet<Order>(compareTwoOrders);
+        orders[key]['list'].add(order);
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    scrollController = ScrollController();
     final ordersList = List.generate(12, (index) {
       return Order(
-        id: index,
         deliveryMan: deliveryMen[Random().nextInt(3)],
         price: Random().nextDouble() * 500,
         orderDate: DateTime.now().subtract(
@@ -66,6 +82,12 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       orders[key]['list'].add(element);
     });
+  }
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -146,7 +168,15 @@ class _HomeScreenState extends State<HomeScreen> {
             FloatingActionButton(
               backgroundColor: Theme.of(context).primaryColor,
               child: Icon(Icons.add),
-              onPressed: () {},
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (context) {
+                    return AddOrderSheet(deliveryMen, addOrder);
+                  },
+                );
+              },
             ),
           ],
         ),
