@@ -13,6 +13,8 @@ import 'package:intl/intl.dart';
 import 'package:sticky_headers/sticky_headers.dart';
 
 class HomeScreen extends StatefulWidget {
+  final Function toggle;
+  HomeScreen(this.toggle);
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -25,7 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   ScrollController scrollController;
   bool showUpButton = false;
   List<String> deliveryMen = ['Muhammed Aly', 'Toka Ehab', 'Ahmed Aly'];
-
+  DateTime selectedDate;
+  SplayTreeSet<Order> selectedOrders;
+  bool isDark;
   int compareTwoOrders(Order a, Order b) {
     return -a.orderDate.compareTo(b.orderDate);
   }
@@ -57,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    isDark = false;
     scrollController = ScrollController();
     final ordersList = List.generate(12, (index) {
       return Order(
@@ -82,6 +87,13 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       orders[key]['list'].add(element);
     });
+    selectedDate = DateTime.now();
+    String key = DateFormat('yyyyMMdd').format(selectedDate);
+    if (orders.containsKey(key)) {
+      selectedOrders = orders[key]['list'];
+    } else {
+      selectedOrders = null;
+    }
   }
 
   @override
@@ -90,9 +102,23 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  void changeDate(DateTime date) {
+    setState(() {
+      selectedDate = date;
+      String key = DateFormat('yyyyMMdd').format(selectedDate);
+
+      if (orders.containsKey(key)) {
+        selectedOrders = orders[key]['list'];
+      } else {
+        selectedOrders = null;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).accentColor,
       body: Stack(
         children: [
           BackgroundContainer(),
@@ -102,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   HomeScreenTitle(),
-                  Chart(),
+                  Chart(selectedDate, changeDate, selectedOrders),
                   Expanded(
                     child: NotificationListener<ScrollUpdateNotification>(
                       onNotification: (notification) {
@@ -165,9 +191,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   scrollController.jumpTo(0.0);
                 },
               ),
+            Spacer(),
+            Switch(
+              value: isDark,
+              onChanged: (value) {
+                setState(() {
+                  isDark = value;
+                });
+                widget.toggle();
+              },
+            ),
             FloatingActionButton(
               backgroundColor: Theme.of(context).primaryColor,
-              child: Icon(Icons.add),
+              child: Icon(
+                Icons.add,
+                color: Colors.white,
+              ),
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
