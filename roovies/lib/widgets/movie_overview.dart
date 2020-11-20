@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:roovies/widgets/movies_list.dart';
 
-class TrendingMovies extends StatelessWidget {
+class MovieOverview extends StatelessWidget {
+  final String data;
+  MovieOverview(this.data);
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(left: 10, top: 20),
+      margin: EdgeInsets.only(top: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Trending Movies Of This Week',
+            'Overview',
             style: Theme.of(context).textTheme.headline6,
           ),
-          MoviesList.trending(),
+          Text(
+            data,
+            style: TextStyle(
+              color: Colors.white,
+            ),
+          )
         ],
       ),
     );

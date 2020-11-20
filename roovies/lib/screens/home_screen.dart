@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:roovies/models/tmdb_handler.dart';
+import 'package:roovies/providers/genres_provider.dart';
 import 'package:roovies/providers/movies_provider.dart';
+import 'package:roovies/providers/persons_provider.dart';
 import 'package:roovies/widgets/movies_by_genre.dart';
 import 'package:roovies/widgets/now_playing.dart';
 import 'package:roovies/widgets/trending_movies.dart';
@@ -26,10 +28,16 @@ class _HomeScreenState extends State<HomeScreen> {
     super.didChangeDependencies();
     if (firstRun) {
       //await Provider.of<MoviesProvider>(context, listen: false).fetchNowPlaying();
-      bool done = await context.read<MoviesProvider>().fetchNowPlaying();
+
+      List<bool> results = await Future.wait([
+        context.read<MoviesProvider>().fetchNowPlaying(),
+        context.read<GenresProvider>().fetchGenres(),
+        context.read<PersonsProvider>().fetchTrendingPersons(),
+        context.read<MoviesProvider>().fetchTrendingMovies()
+      ]);
       setState(() {
         firstRun = false;
-        successful = done;
+        successful = !results.any((element) => element == false);
       });
     }
   }
