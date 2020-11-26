@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:roovies/models/movie.dart';
 import 'package:roovies/models/movie_details.dart';
 import 'package:roovies/providers/movies_provider.dart';
+import 'package:roovies/screens/video_screen.dart';
 import 'package:roovies/widgets/movie_genres.dart';
 import 'package:roovies/widgets/movie_info.dart';
 import 'package:roovies/widgets/movie_overview.dart';
@@ -20,6 +21,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   MovieDetails movieDetails;
   bool firstRun, successful;
   Movie movie;
+  String videoKey;
   @override
   void initState() {
     super.initState();
@@ -32,14 +34,16 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     super.didChangeDependencies();
     if (firstRun) {
       movie = ModalRoute.of(context).settings.arguments;
-      MovieDetails tmp =
-          await context.read<MoviesProvider>().fetchMovieDetailsById(movie.id);
-
+      List results = await Future.wait([
+        context.read<MoviesProvider>().fetchMovieDetailsById(movie.id),
+        context.read<MoviesProvider>().fetchVideoKeyByMovieId(movie.id)
+      ]);
       setState(() {
         firstRun = false;
-        if (tmp != null) {
+        if (!results.any((element) => element == null)) {
           successful = true;
-          movieDetails = tmp;
+          movieDetails = results[0];
+          videoKey = results[1];
         } else {
           successful = false;
         }
@@ -122,7 +126,13 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                   ],
                   expandedHeight: MediaQuery.of(context).size.height * 0.4,
                   floatingWidget: FloatingActionButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) {
+                          return VideoScreen(videoKey);
+                        },
+                      ));
+                    },
                     backgroundColor: Theme.of(context).accentColor,
                     child: Icon(
                       Icons.play_arrow,
