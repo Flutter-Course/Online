@@ -1,22 +1,47 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:my_shop/widgets/auth_widgets/auth_title.dart';
 
 class AuthForm extends StatefulWidget {
+  final Function toggleResetPassword;
+  AuthForm(this.toggleResetPassword);
   @override
   _AuthFormState createState() => _AuthFormState();
 }
 
 class _AuthFormState extends State<AuthForm> {
   GlobalKey field;
+  GlobalKey<FormState> form;
   bool hidePassword, hideConfirmPassword, loginMode;
   double height;
+  String email, password, confirmPassword;
+  FocusNode passwordNode, confirmPasswordNode;
 
   @override
   void initState() {
     super.initState();
     field = GlobalKey();
+    form = GlobalKey<FormState>();
+    passwordNode = FocusNode();
+    confirmPasswordNode = FocusNode();
     hideConfirmPassword = hidePassword = loginMode = true;
     height = 0;
+  }
+
+  void tryToRegister() {
+    if (form.currentState.validate()) {
+      //register
+
+    }
+  }
+
+  void tryToLogin() {
+    if (form.currentState.validate()) {
+      //login
+      print('ok');
+    } else {
+      print('No');
+    }
   }
 
   @override
@@ -36,6 +61,7 @@ class _AuthFormState extends State<AuthForm> {
                     : AuthTitle(UniqueKey(), 'Create'),
               ),
               Form(
+                key: form,
                 child: Column(
                   children: [
                     TextFormField(
@@ -43,6 +69,21 @@ class _AuthFormState extends State<AuthForm> {
                       style: TextStyle(
                         color: Colors.white,
                       ),
+                      textInputAction: TextInputAction.next,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        setState(() {
+                          email = value;
+                        });
+                        if (EmailValidator.validate(value)) {
+                          return null;
+                        }
+
+                        return 'Invalid email address';
+                      },
+                      onFieldSubmitted: (value) {
+                        passwordNode.requestFocus();
+                      },
                       decoration: InputDecoration(
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
@@ -71,7 +112,25 @@ class _AuthFormState extends State<AuthForm> {
                       style: TextStyle(
                         color: Colors.white,
                       ),
+                      focusNode: passwordNode,
                       obscureText: hidePassword,
+                      textInputAction: (loginMode)
+                          ? TextInputAction.done
+                          : TextInputAction.next,
+                      onFieldSubmitted: (value) {
+                        if (!loginMode) {
+                          confirmPasswordNode.requestFocus();
+                        }
+                      },
+                      validator: (value) {
+                        setState(() {
+                          password = value;
+                        });
+                        if (value.length >= 6) {
+                          return null;
+                        }
+                        return 'Password must contains 6 characters at least';
+                      },
                       decoration: InputDecoration(
                         suffix: InkWell(
                           onTap: () {
@@ -121,6 +180,18 @@ class _AuthFormState extends State<AuthForm> {
                             color: Colors.white,
                           ),
                           obscureText: hideConfirmPassword,
+                          focusNode: confirmPasswordNode,
+                          validator: (value) {
+                            setState(() {
+                              confirmPassword = value;
+                            });
+
+                            if (value == password || loginMode) {
+                              return null;
+                            }
+
+                            return 'Passwords must match';
+                          },
                           decoration: InputDecoration(
                             suffix: InkWell(
                               onTap: () {
@@ -173,7 +244,9 @@ class _AuthFormState extends State<AuthForm> {
                       color: Colors.white,
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    widget.toggleResetPassword();
+                  },
                 ),
               ),
               Container(
@@ -203,7 +276,13 @@ class _AuthFormState extends State<AuthForm> {
                           ),
                   ),
                   color: Colors.black,
-                  onPressed: () {},
+                  onPressed: () {
+                    if (loginMode) {
+                      tryToLogin();
+                    } else {
+                      tryToRegister();
+                    }
+                  },
                 ),
               ),
               AnimatedSwitcher(
