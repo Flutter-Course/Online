@@ -1,6 +1,9 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:my_shop/screens/home_screen.dart';
 import 'package:my_shop/widgets/auth_widgets/auth_title.dart';
+import 'package:my_shop/providers/user_provider.dart';
+import 'package:provider/provider.dart';
 
 class AuthForm extends StatefulWidget {
   final Function toggleResetPassword;
@@ -12,7 +15,7 @@ class AuthForm extends StatefulWidget {
 class _AuthFormState extends State<AuthForm> {
   GlobalKey field;
   GlobalKey<FormState> form;
-  bool hidePassword, hideConfirmPassword, loginMode;
+  bool hidePassword, hideConfirmPassword, loginMode, loading;
   double height;
   String email, password, confirmPassword;
   FocusNode passwordNode, confirmPasswordNode;
@@ -24,23 +27,46 @@ class _AuthFormState extends State<AuthForm> {
     form = GlobalKey<FormState>();
     passwordNode = FocusNode();
     confirmPasswordNode = FocusNode();
+    loading = false;
     hideConfirmPassword = hidePassword = loginMode = true;
     height = 0;
   }
 
-  void tryToRegister() {
+  void tryToRegister() async {
     if (form.currentState.validate()) {
-      //register
-
+      setState(() {
+        loading = true;
+      });
+      String error = await Provider.of<UserProvider>(context, listen: false)
+          .register(email, password);
+      if (error == null) {
+        Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+      } else {
+        setState(() {
+          loading = false;
+        });
+        Scaffold.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.redAccent));
+      }
     }
   }
 
-  void tryToLogin() {
+  void tryToLogin() async {
     if (form.currentState.validate()) {
-      //login
-      print('ok');
-    } else {
-      print('No');
+      setState(() {
+        loading = true;
+      });
+      String error = await Provider.of<UserProvider>(context, listen: false)
+          .login(email, password);
+      if (error == null) {
+        Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+      } else {
+        setState(() {
+          loading = false;
+        });
+        Scaffold.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.redAccent));
+      }
     }
   }
 
@@ -97,6 +123,11 @@ class _AuthFormState extends State<AuthForm> {
                             width: 3,
                           ),
                         ),
+                        errorBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.redAccent,
+                          ),
+                        ),
                         labelText: 'Email',
                         hintText: 'example@abc.com',
                         labelStyle: TextStyle(
@@ -105,6 +136,9 @@ class _AuthFormState extends State<AuthForm> {
                         ),
                         hintStyle: TextStyle(
                           color: Colors.white,
+                        ),
+                        errorStyle: TextStyle(
+                          color: Colors.redAccent,
                         ),
                       ),
                     ),
@@ -144,6 +178,14 @@ class _AuthFormState extends State<AuthForm> {
                                 : Icons.visibility_off,
                             color: Colors.white,
                           ),
+                        ),
+                        errorBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                        errorStyle: TextStyle(
+                          color: Colors.redAccent,
                         ),
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
@@ -212,6 +254,14 @@ class _AuthFormState extends State<AuthForm> {
                                 width: 1,
                               ),
                             ),
+                            errorBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Colors.redAccent,
+                              ),
+                            ),
+                            errorStyle: TextStyle(
+                              color: Colors.redAccent,
+                            ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white,
@@ -249,42 +299,44 @@ class _AuthFormState extends State<AuthForm> {
                   },
                 ),
               ),
-              Container(
-                margin: EdgeInsets.only(top: 10),
-                width: double.infinity,
-                height: 50,
-                child: RaisedButton(
-                  shape: StadiumBorder(),
-                  child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 400),
-                    child: (loginMode)
-                        ? Text(
-                            'Login',
-                            key: UniqueKey(),
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            'Register',
-                            key: UniqueKey(),
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                  color: Colors.black,
-                  onPressed: () {
-                    if (loginMode) {
-                      tryToLogin();
-                    } else {
-                      tryToRegister();
-                    }
-                  },
-                ),
-              ),
+              (loading)
+                  ? Center(child: CircularProgressIndicator())
+                  : Container(
+                      margin: EdgeInsets.only(top: 10),
+                      width: double.infinity,
+                      height: 50,
+                      child: RaisedButton(
+                        shape: StadiumBorder(),
+                        child: AnimatedSwitcher(
+                          duration: Duration(milliseconds: 400),
+                          child: (loginMode)
+                              ? Text(
+                                  'Login',
+                                  key: UniqueKey(),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  'Register',
+                                  key: UniqueKey(),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                        color: Colors.black,
+                        onPressed: () {
+                          if (loginMode) {
+                            tryToLogin();
+                          } else {
+                            tryToRegister();
+                          }
+                        },
+                      ),
+                    ),
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 400),
                 child: (loginMode)

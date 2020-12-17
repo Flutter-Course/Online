@@ -4,6 +4,7 @@ import 'package:my_shop/widgets/auth_widgets/auth_form.dart';
 import 'package:my_shop/widgets/auth_widgets/reset_password_form.dart';
 
 class AuthScreen extends StatefulWidget {
+  static const routeName = '/auth';
   @override
   _AuthScreenState createState() => _AuthScreenState();
 }
