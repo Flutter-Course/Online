@@ -3,10 +3,14 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:my_shop/providers/user_provider.dart';
 import 'package:my_shop/screens/auth_screen.dart';
+import 'package:my_shop/screens/home_screen.dart';
 import 'package:my_shop/widgets/collecting_data_widgets/collecting_data_one.dart';
 import 'package:my_shop/widgets/collecting_data_widgets/collecting_data_two.dart';
 import 'package:page_indicator/page_indicator.dart';
+import 'package:provider/provider.dart';
 
 class CollectingDataScreen extends StatefulWidget {
   @override
@@ -18,11 +22,13 @@ class _CollectingDataScreenState extends State<CollectingDataScreen> {
   File image;
   String userName, mobileNumber;
   int index;
+  bool loading;
   @override
   void initState() {
     super.initState();
     index = 0;
     controller = PageController();
+    loading = false;
   }
 
   @override
@@ -80,6 +86,34 @@ class _CollectingDataScreenState extends State<CollectingDataScreen> {
     );
   }
 
+  void submit(LatLng position, String address) async {
+    setState(() {
+      loading = true;
+    });
+    bool done = await Provider.of<UserProvider>(context, listen: false)
+        .completeProfile(image, userName, address, mobileNumber, position);
+    if (done) {
+      Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+    } else {
+      setState(() {
+        loading = false;
+      });
+      showDialog(
+          context: context,
+          child: AlertDialog(
+            title: Text('Error has occurred'),
+            content: Text('Please try again later'),
+            actions: [
+              FlatButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('Ok'))
+            ],
+          ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -94,28 +128,42 @@ class _CollectingDataScreenState extends State<CollectingDataScreen> {
         body: SingleChildScrollView(
           physics:
               (index == 1) ? NeverScrollableScrollPhysics() : ScrollPhysics(),
-          child: Container(
-            height: MediaQuery.of(context).size.height,
-            width: MediaQuery.of(context).size.width,
-            child: PageIndicatorContainer(
-              padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).size.height * 0.1 / 2 + 16),
-              length: 2,
-              indicatorSelectorColor: Colors.black,
-              indicatorColor: Colors.grey,
-              shape: IndicatorShape.roundRectangleShape(
-                size: Size(20, 5),
-                cornerSize: Size.square(20),
+          child: Stack(
+            children: [
+              Container(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
+                child: PageIndicatorContainer(
+                  padding: EdgeInsets.only(
+                      bottom:
+                          MediaQuery.of(context).size.height * 0.1 / 2 + 16),
+                  length: 2,
+                  indicatorSelectorColor: Colors.black,
+                  indicatorColor: Colors.grey,
+                  shape: IndicatorShape.roundRectangleShape(
+                    size: Size(20, 5),
+                    cornerSize: Size.square(20),
+                  ),
+                  child: PageView(
+                    controller: controller,
+                    physics: NeverScrollableScrollPhysics(),
+                    children: [
+                      CollectingDataOne(nextPage),
+                      CollectingDataTwo(prevPage, submit),
+                    ],
+                  ),
+                ),
               ),
-              child: PageView(
-                controller: controller,
-                physics: NeverScrollableScrollPhysics(),
-                children: [
-                  CollectingDataOne(nextPage),
-                  CollectingDataTwo(prevPage),
-                ],
-              ),
-            ),
+              if (loading)
+                Container(
+                  height: MediaQuery.of(context).size.height,
+                  width: MediaQuery.of(context).size.width,
+                  color: Colors.black38,
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+            ],
           ),
         ),
       ),

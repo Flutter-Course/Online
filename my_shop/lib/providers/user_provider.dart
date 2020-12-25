@@ -1,9 +1,14 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:my_shop/models/user.dart' as myShop;
 
 class UserProvider with ChangeNotifier {
+  var currentUser;
   Future<String> login(String email, String password) async {
     try {
       await FirebaseAuth.instance
@@ -50,6 +55,53 @@ class UserProvider with ChangeNotifier {
       return null;
     } catch (e) {
       return 'Check your internect connecting and that your email is valid';
+    }
+  }
+
+  Future<bool> completeProfile(
+    File image,
+    String username,
+    String address,
+    String phoneNumber,
+    LatLng position,
+  ) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser.uid;
+      final email = FirebaseAuth.instance.currentUser.email;
+      final ref = FirebaseStorage.instance
+          .ref('users/$userId.${image.path.split('.').last}');
+      await ref.putFile(image);
+      final imageUrl = await ref.getDownloadURL();
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'username': username,
+        'address': address,
+        'phoneNumber': phoneNumber,
+        'lat': position.latitude,
+        'lng': position.longitude,
+        'email': email,
+        'imageUrl': imageUrl,
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isCompleteProfile() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser.uid;
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      if (doc.exists) {
+        currentUser = myShop.User.fromFirebase(userId, doc);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
     }
   }
 }
