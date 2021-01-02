@@ -6,9 +6,12 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:my_shop/models/user.dart' as myShop;
+import 'package:my_shop/models/customer.dart';
+import 'package:my_shop/models/vendor.dart';
 
 class UserProvider with ChangeNotifier {
-  var currentUser;
+  myShop.User currentUser;
+
   Future<String> login(String email, String password) async {
     try {
       await FirebaseAuth.instance
@@ -80,6 +83,7 @@ class UserProvider with ChangeNotifier {
         'lng': position.longitude,
         'email': email,
         'imageUrl': imageUrl,
+        'type': 'Customer',
       });
       return true;
     } catch (e) {
@@ -95,7 +99,13 @@ class UserProvider with ChangeNotifier {
           .doc(userId)
           .get();
       if (doc.exists) {
-        currentUser = myShop.User.fromFirebase(userId, doc);
+        if (doc.data()['type'] == 'Customer') {
+          currentUser = Customer.fromFirebase(userId, doc);
+        } else {
+          currentUser = Vendor.fromFirebase(userId, doc);
+        }
+
+        await currentUser.init();
         return true;
       } else {
         return false;
@@ -103,5 +113,32 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       return false;
     }
+  }
+
+  Future<bool> switchAccountType() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.userId)
+          .update({
+        'type': isCustomer ? 'Vendor' : 'Customer',
+      });
+
+      if (isCustomer) {
+        currentUser = Vendor.fromCustomer(currentUser);
+      } else {
+        currentUser = Customer.fromVendor(currentUser);
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
+
+  bool get isCustomer {
+    return currentUser is Customer;
   }
 }
