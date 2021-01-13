@@ -10,10 +10,7 @@ class CollectingDataTitle extends StatelessWidget {
           vertical: MediaQuery.of(context).size.height * 0.05),
       child: Text(
         data,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 25,
-        ),
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
       ),
     );
   }

@@ -5,33 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:my_shop/models/user.dart' as myShop;
 import 'package:my_shop/models/customer.dart';
+import 'package:my_shop/models/user.dart' as myShop;
 import 'package:my_shop/models/vendor.dart';
 
 class UserProvider with ChangeNotifier {
   myShop.User currentUser;
-
-  Future<String> login(String email, String password) async {
-    try {
-      await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
-      return null;
-    } on FirebaseAuthException catch (e) {
-      switch (e.code) {
-        case 'user-not-found':
-          return 'No user found for that email.';
-        case 'wrong-password':
-          return 'Invalid email or password';
-        case 'invalid-email':
-          return 'Invalid email or password';
-        default:
-          return 'This user has been disabled';
-      }
-    } on SocketException {
-      return 'Network problem try again later';
-    }
-  }
 
   Future<String> register(String email, String password) async {
     try {
@@ -39,16 +18,33 @@ class UserProvider with ChangeNotifier {
           .createUserWithEmailAndPassword(email: email, password: password);
       return null;
     } on FirebaseAuthException catch (e) {
-      switch (e.code) {
-        case 'email-already-in-use':
-          return 'This email is already in use';
-        case 'invalid-email':
-          return 'Invalid email address';
-        default:
-          return 'You entered a weak password';
+      if (e.code == 'weak-password') {
+        return 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        return 'The account already exists for that email.';
+      } else {
+        return 'Invalid email address.';
       }
-    } on SocketException {
-      return 'Network problem try again later';
+    } catch (e) {
+      return 'Network error.';
+    }
+  }
+
+  Future<String> login(String email, String password) async {
+    try {
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-email') {
+        return 'Invalid email or password.';
+      } else if (e.code == 'user-disabled') {
+        return 'This account has been disabled.';
+      } else {
+        return 'No account with this email.';
+      }
+    } catch (e) {
+      return 'Network error.';
     }
   }
 
@@ -56,81 +52,37 @@ class UserProvider with ChangeNotifier {
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       return null;
+    } on FirebaseAuthException catch (e) {
+      return 'There is no account with this email';
+    } on SocketException catch (e) {
+      return 'Network error.';
     } catch (e) {
-      return 'Check your internect connecting and that your email is valid';
+      return 'Error has been occurred, please try again later.';
     }
   }
 
   Future<bool> completeProfile(
-    File image,
     String username,
+    String mobileNumber,
     String address,
-    String phoneNumber,
     LatLng position,
+    File image,
   ) async {
     try {
-      final userId = FirebaseAuth.instance.currentUser.uid;
-      final email = FirebaseAuth.instance.currentUser.email;
-      final ref = FirebaseStorage.instance
-          .ref('users/$userId.${image.path.split('.').last}');
+      String id = FirebaseAuth.instance.currentUser.uid;
+      Reference ref = FirebaseStorage.instance
+          .ref('users/$id.${image.path.split('.').last}');
       await ref.putFile(image);
-      final imageUrl = await ref.getDownloadURL();
-      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+      String imageUrl = await ref.getDownloadURL();
+      await FirebaseFirestore.instance.collection('users').doc(id).set({
         'username': username,
+        'mobileNumber': mobileNumber,
         'address': address,
-        'phoneNumber': phoneNumber,
         'lat': position.latitude,
         'lng': position.longitude,
-        'email': email,
-        'imageUrl': imageUrl,
+        'photoUrl': imageUrl,
         'type': 'Customer',
       });
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> isCompleteProfile() async {
-    try {
-      final userId = FirebaseAuth.instance.currentUser.uid;
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      if (doc.exists) {
-        if (doc.data()['type'] == 'Customer') {
-          currentUser = Customer.fromFirebase(userId, doc);
-        } else {
-          currentUser = Vendor.fromFirebase(userId, doc);
-        }
-
-        await currentUser.init();
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> switchAccountType() async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.userId)
-          .update({
-        'type': isCustomer ? 'Vendor' : 'Customer',
-      });
-
-      if (isCustomer) {
-        currentUser = Vendor.fromCustomer(currentUser);
-      } else {
-        currentUser = Customer.fromVendor(currentUser);
-      }
-
-      notifyListeners();
       return true;
     } catch (e) {
       print(e);
@@ -138,7 +90,68 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  bool get isCustomer {
-    return currentUser is Customer;
+  Future<bool> isProfileComplete() async {
+    try {
+      String id = FirebaseAuth.instance.currentUser.uid;
+      String email = FirebaseAuth.instance.currentUser.email;
+      final document =
+          await FirebaseFirestore.instance.collection('users').doc(id).get();
+      if (document.exists) {
+        if (document.data()['type'] == 'Customer') {
+          currentUser = Customer.fromFirestore(id, email, document);
+        } else {
+          currentUser = Vendor.fromFirestore(id, email, document);
+        }
+        await currentUser.init();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      print(error);
+      return false;
+    }
+  }
+
+  bool get isCustomer => currentUser is Customer;
+
+  Future<bool> toggleUserType() async {
+    try {
+      if (isCustomer) {
+        //to vendor
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.userId)
+            .update({'type': 'Vendor'});
+        currentUser = Vendor.fromCustomer(currentUser);
+      } else {
+        //to customer
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.userId)
+            .update({'type': 'Customer'});
+        currentUser = Customer.fromVendor(currentUser);
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> addProduct(
+      title, description, forWho, category, price, photos) async {
+    bool added = await (currentUser as Vendor)
+        .addProduct(title, description, forWho, category, price, photos);
+    notifyListeners();
+    return added;
+  }
+
+  Future<bool> editProduct(id, title, description, forWho, category, price,
+      photos, available, date) async {
+    bool edited = await (currentUser as Vendor).editProduct(id, title,
+        description, forWho, category, price, photos, available, date);
+    notifyListeners();
+    return edited;
   }
 }

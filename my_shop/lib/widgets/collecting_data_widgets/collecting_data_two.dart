@@ -3,11 +3,12 @@ import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:my_shop/widgets/misc/arrow_button.dart';
+
 import 'collecting_data_title.dart';
 
 class CollectingDataTwo extends StatefulWidget {
-  final Function prevPage;
-  final Function submit;
+  final Function prevPage, submit;
+
   CollectingDataTwo(this.prevPage, this.submit);
 
   @override
@@ -16,18 +17,17 @@ class CollectingDataTwo extends StatefulWidget {
 
 class _CollectingDataTwoState extends State<CollectingDataTwo> {
   LatLng currentPosition;
-  bool loading;
   String currentAddress;
+  bool loading;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     loading = true;
   }
 
   @override
   void didChangeDependencies() async {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     if (loading) {
       Location location = new Location();
@@ -71,11 +71,11 @@ class _CollectingDataTwoState extends State<CollectingDataTwo> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height - 32,
-        padding: EdgeInsets.all(16),
+    return Container(
+      padding: EdgeInsets.all(16),
+      height: double.infinity,
+      width: double.infinity,
+      child: SafeArea(
         child: Column(
           children: [
             Expanded(
@@ -83,44 +83,48 @@ class _CollectingDataTwoState extends State<CollectingDataTwo> {
               child: Column(
                 children: [
                   CollectingDataTitle(
-                      'One step left, pick your location so we can deliver to you.'),
+                    'One step left pick your location so we can deliver to you.',
+                  ),
                   Expanded(
-                    child: loading
+                    child: (loading)
                         ? Center(
                             child: CircularProgressIndicator(),
                           )
                         : Stack(
                             children: [
                               GoogleMap(
-                                myLocationEnabled: true,
-                                onCameraIdle: () async {
-                                  currentAddress =
-                                      await getAddress(currentPosition);
-                                  setState(() {});
-                                },
                                 onCameraMove: (position) {
                                   setState(() {
                                     currentPosition = position.target;
                                   });
                                 },
+                                onCameraIdle: () async {
+                                  currentAddress =
+                                      await getAddress(currentPosition);
+                                  setState(() {});
+                                },
+                                myLocationEnabled: true,
                                 initialCameraPosition: CameraPosition(
-                                    target: currentPosition, zoom: 14),
-                              ),
-                              Card(
-                                elevation: 20,
-                                margin: EdgeInsets.fromLTRB(16, 60, 16, 0),
-                                child: Padding(
-                                  padding: EdgeInsets.all(8),
-                                  child: Text(currentAddress),
+                                  target: currentPosition,
+                                  zoom: 14,
                                 ),
                               ),
-                              Container(
-                                margin: EdgeInsets.only(bottom: 35 / 2),
-                                child: Center(
+                              Center(
+                                child: Container(
+                                  margin: EdgeInsets.only(bottom: 35 / 2),
                                   child: Icon(
                                     Icons.place,
                                     size: 35,
                                   ),
+                                ),
+                              ),
+                              Card(
+                                margin: EdgeInsets.only(
+                                    top: 60, left: 16, right: 16),
+                                elevation: 20,
+                                child: Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text(currentAddress),
                                 ),
                               )
                             ],
@@ -130,24 +134,24 @@ class _CollectingDataTwoState extends State<CollectingDataTwo> {
               ),
             ),
             Expanded(
+              flex: 1,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ArrowButton.left(
-                      label: 'Back',
-                      onPressed: () {
-                        widget.prevPage();
-                      }),
-                  ArrowButton.right(
-                    label: 'Submit',
+                    title: 'Back',
                     onPressed: () {
-                      widget.submit(currentPosition, currentAddress);
+                      widget.prevPage();
                     },
                   ),
+                  ArrowButton.right(
+                      title: 'Submit',
+                      onPressed: () {
+                        widget.submit(currentPosition, currentAddress);
+                      }),
                 ],
               ),
-              flex: 1,
-            ),
+            )
           ],
         ),
       ),

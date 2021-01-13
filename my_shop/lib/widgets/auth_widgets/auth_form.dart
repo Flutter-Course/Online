@@ -1,9 +1,8 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:my_shop/screens/home_screen.dart';
+import 'package:my_shop/providers/user_provider.dart';
 import 'package:my_shop/screens/transit_screen.dart';
 import 'package:my_shop/widgets/auth_widgets/auth_title.dart';
-import 'package:my_shop/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 
 class AuthForm extends StatefulWidget {
@@ -14,42 +13,24 @@ class AuthForm extends StatefulWidget {
 }
 
 class _AuthFormState extends State<AuthForm> {
+  String email, password;
+  bool hidePassword, hideConfirmPassword, loginMode;
+  FocusNode passwordNode, confirmPasswordNode;
+  double height;
   GlobalKey field;
   GlobalKey<FormState> form;
-  bool hidePassword, hideConfirmPassword, loginMode, loading;
-  double height;
-  String email, password, confirmPassword;
-  FocusNode passwordNode, confirmPasswordNode;
+  bool loading;
 
   @override
   void initState() {
     super.initState();
-    field = GlobalKey();
-    form = GlobalKey<FormState>();
+    loading = false;
     passwordNode = FocusNode();
     confirmPasswordNode = FocusNode();
-    loading = false;
     hideConfirmPassword = hidePassword = loginMode = true;
     height = 0;
-  }
-
-  void tryToRegister() async {
-    if (form.currentState.validate()) {
-      setState(() {
-        loading = true;
-      });
-      String error = await Provider.of<UserProvider>(context, listen: false)
-          .register(email, password);
-      if (error == null) {
-        Navigator.of(context).pushReplacementNamed(TransitScreen.routeName);
-      } else {
-        setState(() {
-          loading = false;
-        });
-        Scaffold.of(context).showSnackBar(
-            SnackBar(content: Text(error), backgroundColor: Colors.redAccent));
-      }
-    }
+    field = GlobalKey();
+    form = GlobalKey<FormState>();
   }
 
   void tryToLogin() async {
@@ -60,13 +41,38 @@ class _AuthFormState extends State<AuthForm> {
       String error = await Provider.of<UserProvider>(context, listen: false)
           .login(email, password);
       if (error == null) {
+        //home screen
         Navigator.of(context).pushReplacementNamed(TransitScreen.routeName);
       } else {
         setState(() {
           loading = false;
         });
-        Scaffold.of(context).showSnackBar(
-            SnackBar(content: Text(error), backgroundColor: Colors.redAccent));
+        Scaffold.of(context).showSnackBar(SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red[900],
+        ));
+      }
+    }
+  }
+
+  void tryToRegister() async {
+    if (form.currentState.validate()) {
+      setState(() {
+        loading = true;
+      });
+      String error = await Provider.of<UserProvider>(context, listen: false)
+          .register(email, password);
+      if (error == null) {
+        //home screen
+        Navigator.of(context).pushReplacementNamed(TransitScreen.routeName);
+      } else {
+        setState(() {
+          loading = false;
+        });
+        Scaffold.of(context).showSnackBar(SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red[900],
+        ));
       }
     }
   }
@@ -74,12 +80,13 @@ class _AuthFormState extends State<AuthForm> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height,
       width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
       child: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 30),
+          padding: EdgeInsets.fromLTRB(30, 30, 30, 5),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 400),
@@ -87,17 +94,21 @@ class _AuthFormState extends State<AuthForm> {
                     ? AuthTitle(UniqueKey(), 'Login into')
                     : AuthTitle(UniqueKey(), 'Create'),
               ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.05,
+              ),
               Form(
                 key: form,
                 child: Column(
                   children: [
                     TextFormField(
                       key: field,
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                      textInputAction: TextInputAction.next,
+                      style: TextStyle(color: Colors.white),
                       keyboardType: TextInputType.emailAddress,
+                      onFieldSubmitted: (value) {
+                        passwordNode.requestFocus();
+                      },
+                      textInputAction: TextInputAction.next,
                       validator: (value) {
                         setState(() {
                           email = value;
@@ -105,50 +116,39 @@ class _AuthFormState extends State<AuthForm> {
                         if (EmailValidator.validate(value)) {
                           return null;
                         }
-
-                        return 'Invalid email address';
-                      },
-                      onFieldSubmitted: (value) {
-                        passwordNode.requestFocus();
+                        return 'Invalid email';
                       },
                       decoration: InputDecoration(
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                            width: 3,
-                          ),
-                        ),
+                        errorStyle: TextStyle(color: Colors.redAccent),
                         errorBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: Colors.redAccent,
                           ),
                         ),
-                        labelText: 'Email',
                         hintText: 'example@abc.com',
+                        labelText: 'Email',
                         labelStyle: TextStyle(
-                          color: Colors.white,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                         hintStyle: TextStyle(
                           color: Colors.white,
                         ),
-                        errorStyle: TextStyle(
-                          color: Colors.redAccent,
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white, width: 1),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.white,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
                     TextFormField(
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                      focusNode: passwordNode,
+                      style: TextStyle(color: Colors.white),
                       obscureText: hidePassword,
+                      focusNode: passwordNode,
                       textInputAction: (loginMode)
                           ? TextInputAction.done
                           : TextInputAction.next,
@@ -164,10 +164,34 @@ class _AuthFormState extends State<AuthForm> {
                         if (value.length >= 6) {
                           return null;
                         }
-                        return 'Password must contains 6 characters at least';
+                        return 'Password must contain 6 characters at least';
                       },
                       decoration: InputDecoration(
-                        suffix: InkWell(
+                        errorBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                        errorStyle: TextStyle(color: Colors.redAccent),
+                        hintText: '••••••••',
+                        labelText: 'Password',
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        hintStyle: TextStyle(
+                          color: Colors.white,
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white, width: 1),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        suffix: GestureDetector(
                           onTap: () {
                             setState(() {
                               hidePassword = !hidePassword;
@@ -180,103 +204,66 @@ class _AuthFormState extends State<AuthForm> {
                             color: Colors.white,
                           ),
                         ),
-                        errorBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                        errorStyle: TextStyle(
-                          color: Colors.redAccent,
-                        ),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                            width: 3,
-                          ),
-                        ),
-                        labelText: 'Password',
-                        hintText: '••••••••',
-                        labelStyle: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        hintStyle: TextStyle(
-                          color: Colors.white,
-                        ),
                       ),
                     ),
                     AnimatedContainer(
-                      duration: Duration(milliseconds: 1000),
-                      curve: Curves.bounceOut,
+                      duration: Duration(seconds: 1),
                       height: height,
+                      curve: Curves.bounceOut,
                       child: AnimatedOpacity(
                         duration: Duration(milliseconds: 400),
-                        opacity: (loginMode) ? 0 : 1,
+                        opacity: loginMode ? 0 : 1,
                         child: TextFormField(
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
+                          style: TextStyle(color: Colors.white),
                           obscureText: hideConfirmPassword,
                           focusNode: confirmPasswordNode,
-                          validator: (value) {
-                            setState(() {
-                              confirmPassword = value;
-                            });
-
-                            if (value == password || loginMode) {
+                          validator: (confirmPassword) {
+                            if (loginMode || password == confirmPassword) {
                               return null;
                             }
-
                             return 'Passwords must match';
                           },
                           decoration: InputDecoration(
-                            suffix: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  hideConfirmPassword = !hideConfirmPassword;
-                                });
-                              },
-                              child: Icon(
-                                (hideConfirmPassword)
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                color: Colors.white,
-                              ),
-                            ),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.white,
-                                width: 1,
-                              ),
-                            ),
                             errorBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.redAccent,
                               ),
                             ),
-                            errorStyle: TextStyle(
-                              color: Colors.redAccent,
+                            errorStyle: TextStyle(color: Colors.redAccent),
+                            hintText: '••••••••',
+                            labelText: 'Confirm Password',
+                            labelStyle: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            hintStyle: TextStyle(
+                              color: Colors.white,
+                            ),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.white, width: 1),
                             ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white,
-                                width: 3,
+                                width: 2,
                               ),
                             ),
-                            labelText: 'Confirm Password',
-                            hintText: '••••••••',
-                            labelStyle: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            hintStyle: TextStyle(
-                              color: Colors.white,
+                            suffix: GestureDetector(
+                              onLongPressStart: (_) {
+                                setState(() {
+                                  hideConfirmPassword = !hideConfirmPassword;
+                                });
+                              },
+                              onLongPressEnd: (details) {
+                                setState(() {
+                                  hideConfirmPassword = !hideConfirmPassword;
+                                });
+                              },
+                              child: Icon(
+                                Icons.visibility,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -301,13 +288,15 @@ class _AuthFormState extends State<AuthForm> {
                 ),
               ),
               (loading)
-                  ? Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
                   : Container(
-                      margin: EdgeInsets.only(top: 10),
                       width: double.infinity,
                       height: 50,
                       child: RaisedButton(
                         shape: StadiumBorder(),
+                        color: Colors.black,
                         child: AnimatedSwitcher(
                           duration: Duration(milliseconds: 400),
                           child: (loginMode)
@@ -328,7 +317,6 @@ class _AuthFormState extends State<AuthForm> {
                                   ),
                                 ),
                         ),
-                        color: Colors.black,
                         onPressed: () {
                           if (loginMode) {
                             tryToLogin();
@@ -348,15 +336,13 @@ class _AuthFormState extends State<AuthForm> {
                           children: [
                             Text(
                               'Don\'t have an account?',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(color: Colors.white),
                             ),
                             SizedBox(
                               width: 5,
                             ),
                             Text(
-                              'Register',
+                              'Register!',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -365,10 +351,10 @@ class _AuthFormState extends State<AuthForm> {
                           ],
                         ),
                         onPressed: () {
-                          final c = field.currentContext;
-                          final box = c.findRenderObject() as RenderBox;
+                          final ctx = field.currentContext;
+                          final box = ctx.findRenderObject() as RenderBox;
                           setState(() {
-                            height = box.size.height;
+                            height = box.size.height + 20;
                             loginMode = !loginMode;
                           });
                         },
@@ -380,15 +366,13 @@ class _AuthFormState extends State<AuthForm> {
                           children: [
                             Text(
                               'Already have an account?',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(color: Colors.white),
                             ),
                             SizedBox(
                               width: 5,
                             ),
                             Text(
-                              'Login',
+                              'Login!',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,

@@ -1,7 +1,7 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:my_shop/widgets/auth_widgets/auth_title.dart';
 import 'package:my_shop/providers/user_provider.dart';
+import 'package:my_shop/widgets/auth_widgets/auth_title.dart';
 import 'package:provider/provider.dart';
 
 class ResetPasswordForm extends StatefulWidget {
@@ -12,8 +12,8 @@ class ResetPasswordForm extends StatefulWidget {
 }
 
 class _ResetPasswordFormState extends State<ResetPasswordForm> {
-  String email;
   GlobalKey<FormState> form;
+  String email;
   bool loading;
   @override
   void initState() {
@@ -29,10 +29,9 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
       });
       String error = await Provider.of<UserProvider>(context, listen: false)
           .resetPassword(email);
-
       if (error == null) {
         Scaffold.of(context).showSnackBar(SnackBar(
-          content: Text('Email has been sent'),
+          content: Text('Email has been sent.'),
           backgroundColor: Colors.green[900],
         ));
       } else {
@@ -41,6 +40,7 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
           backgroundColor: Colors.red[900],
         ));
       }
+
       setState(() {
         loading = false;
       });
@@ -50,67 +50,58 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height,
       width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
       child: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 30),
+          padding: EdgeInsets.fromLTRB(30, 30, 30, 5),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AnimatedSwitcher(
-                duration: Duration(milliseconds: 400),
-                child: AuthTitle(
-                  UniqueKey(),
-                  'Reset password of',
-                ),
+              AuthTitle(UniqueKey(), 'Reset password of'),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.05,
               ),
               Form(
                 key: form,
                 child: Column(
                   children: [
                     TextFormField(
-                      keyboardType: TextInputType.emailAddress,
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
                       validator: (value) {
                         setState(() {
                           email = value;
                         });
-                        if (EmailValidator.validate(email)) {
+                        if (EmailValidator.validate(value)) {
                           return null;
                         }
-                        return 'Invalid email address';
+                        return 'Email validator';
                       },
+                      style: TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                            width: 3,
-                          ),
-                        ),
                         errorBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: Colors.redAccent,
                           ),
                         ),
-                        labelText: 'Email',
+                        errorStyle: TextStyle(color: Colors.redAccent),
                         hintText: 'example@abc.com',
+                        labelText: 'Email',
                         labelStyle: TextStyle(
-                          color: Colors.white,
                           fontWeight: FontWeight.bold,
-                        ),
-                        errorStyle: TextStyle(
-                          color: Colors.redAccent,
+                          color: Colors.white,
                         ),
                         hintStyle: TextStyle(
                           color: Colors.white,
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white, width: 1),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.white,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -143,15 +134,19 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
                         },
                       ),
                     ),
-              FlatButton(
-                onPressed: () {
-                  widget.toggleResetPassword();
-                },
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Colors.white,
+              Align(
+                alignment: Alignment.center,
+                child: FlatButton(
+                  padding: EdgeInsets.zero,
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
                   ),
+                  onPressed: () {
+                    widget.toggleResetPassword();
+                  },
                 ),
               ),
             ],

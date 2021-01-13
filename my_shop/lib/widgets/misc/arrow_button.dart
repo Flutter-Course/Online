@@ -1,40 +1,41 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class ArrowButton extends RaisedButton {
-  ArrowButton.left({@required String label, @required Function onPressed})
+  ArrowButton.left({@required String title, @required Function onPressed})
       : super(
-          padding: EdgeInsets.only(left: 15),
-          shape: BeveledRectangleBorder(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              topLeft: Radius.circular(20),
+            padding: EdgeInsets.only(left: 20),
+            color: Colors.black,
+            shape: BeveledRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                bottomLeft: Radius.circular(20),
+              ),
             ),
-          ),
-          color: Colors.black,
-          onPressed: onPressed,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
+            child: Text(
+              title,
+              style: TextStyle(
+                color: Colors.white,
+              ),
             ),
-          ),
-        );
-  ArrowButton.right({@required String label, @required Function onPressed})
+            onPressed: onPressed);
+
+  ArrowButton.right({@required String title, @required Function onPressed})
       : super(
-          padding: EdgeInsets.only(right: 15),
-          shape: BeveledRectangleBorder(
-            borderRadius: BorderRadius.only(
-              bottomRight: Radius.circular(20),
-              topRight: Radius.circular(20),
+            padding: EdgeInsets.only(right: 20),
+            color: Colors.black,
+            shape: BeveledRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
             ),
-          ),
-          color: Colors.black,
-          onPressed: onPressed,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
+            child: Text(
+              title,
+              style: TextStyle(
+                color: Colors.white,
+              ),
             ),
-          ),
-        );
+            onPressed: onPressed);
 }

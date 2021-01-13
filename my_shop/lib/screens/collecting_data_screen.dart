@@ -1,11 +1,8 @@
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:my_shop/providers/user_provider.dart';
-import 'package:my_shop/screens/auth_screen.dart';
 import 'package:my_shop/screens/home_screen.dart';
 import 'package:my_shop/widgets/collecting_data_widgets/collecting_data_one.dart';
 import 'package:my_shop/widgets/collecting_data_widgets/collecting_data_two.dart';
@@ -18,71 +15,46 @@ class CollectingDataScreen extends StatefulWidget {
 }
 
 class _CollectingDataScreenState extends State<CollectingDataScreen> {
-  PageController controller;
+  PageController pageController;
   File image;
-  String userName, mobileNumber;
+  String username, mobileNumber;
   int index;
   bool loading;
+
   @override
   void initState() {
     super.initState();
     index = 0;
-    controller = PageController();
     loading = false;
+    pageController = PageController();
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    pageController.dispose();
     super.dispose();
   }
 
   void nextPage(File image, String userName, String mobileNumber) {
     setState(() {
       this.image = image;
-      this.userName = userName;
+      this.username = userName;
       this.mobileNumber = mobileNumber;
       index++;
     });
-
-    controller.nextPage(
-        duration: Duration(seconds: 1), curve: Curves.decelerate);
+    pageController.nextPage(
+      duration: Duration(seconds: 1),
+      curve: Curves.decelerate,
+    );
   }
 
-  void prevPage() {
+  void previousPage() {
     setState(() {
       index--;
     });
-    controller.previousPage(
-        duration: Duration(seconds: 1), curve: Curves.decelerate);
-  }
-
-  Future<bool> logout() async {
-    return await showDialog(
-      context: context,
-      child: AlertDialog(
-        title: Text('Are you sure?'),
-        content: Text(
-            'If you logged out you will be asked the same questions the next time you login.'),
-        actions: [
-          FlatButton(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
-            child: Text('Cancel'),
-          ),
-          RaisedButton(
-            color: Colors.black,
-            onPressed: () {
-              Navigator.of(context).pop(true);
-            },
-            child: Text(
-              'Logout',
-              style: TextStyle(color: Colors.white),
-            ),
-          )
-        ],
-      ),
+    pageController.previousPage(
+      duration: Duration(seconds: 1),
+      curve: Curves.decelerate,
     );
   }
 
@@ -90,82 +62,59 @@ class _CollectingDataScreenState extends State<CollectingDataScreen> {
     setState(() {
       loading = true;
     });
-    bool done = await Provider.of<UserProvider>(context, listen: false)
-        .completeProfile(image, userName, address, mobileNumber, position);
-    if (done) {
+    bool noError = await Provider.of<UserProvider>(context, listen: false)
+        .completeProfile(username, mobileNumber, address, position, image);
+    if (noError) {
       Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
     } else {
       setState(() {
         loading = false;
       });
-      showDialog(
-          context: context,
-          child: AlertDialog(
-            title: Text('Error has occurred'),
-            content: Text('Please try again later'),
-            actions: [
-              FlatButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text('Ok'))
-            ],
-          ));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (await logout()) {
-          FirebaseAuth.instance.signOut();
-          Navigator.of(context).pushReplacementNamed(AuthScreen.routeName);
-        }
-        return false;
-      },
-      child: Scaffold(
-        body: SingleChildScrollView(
-          physics:
-              (index == 1) ? NeverScrollableScrollPhysics() : ScrollPhysics(),
-          child: Stack(
-            children: [
-              Container(
-                height: MediaQuery.of(context).size.height,
-                width: MediaQuery.of(context).size.width,
-                child: PageIndicatorContainer(
-                  padding: EdgeInsets.only(
-                      bottom:
-                          MediaQuery.of(context).size.height * 0.1 / 2 + 16),
-                  length: 2,
-                  indicatorSelectorColor: Colors.black,
-                  indicatorColor: Colors.grey,
-                  shape: IndicatorShape.roundRectangleShape(
-                    size: Size(20, 5),
-                    cornerSize: Size.square(20),
-                  ),
-                  child: PageView(
-                    controller: controller,
-                    physics: NeverScrollableScrollPhysics(),
-                    children: [
-                      CollectingDataOne(nextPage),
-                      CollectingDataTwo(prevPage, submit),
-                    ],
-                  ),
+    return Scaffold(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            physics:
+                index == 0 ? ScrollPhysics() : NeverScrollableScrollPhysics(),
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              width: MediaQuery.of(context).size.width,
+              child: PageIndicatorContainer(
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).size.height * 0.1 / 2 + 8),
+                length: 2,
+                indicatorSelectorColor: Colors.black,
+                indicatorColor: Colors.grey,
+                shape: IndicatorShape.roundRectangleShape(
+                  size: Size(20, 5),
+                  cornerSize: Size.square(20),
+                ),
+                child: PageView(
+                  controller: pageController,
+                  physics: NeverScrollableScrollPhysics(),
+                  children: [
+                    CollectingDataOne(nextPage),
+                    CollectingDataTwo(previousPage, submit),
+                  ],
                 ),
               ),
-              if (loading)
-                Container(
-                  height: MediaQuery.of(context).size.height,
-                  width: MediaQuery.of(context).size.width,
-                  color: Colors.black38,
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-            ],
+            ),
           ),
-        ),
+          if (loading)
+            Container(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              color: Colors.black45,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
       ),
     );
   }

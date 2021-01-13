@@ -1,23 +1,26 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 abstract class User {
-  String email, userId, username, address, phoneNumber;
+  String userId, email, userName, mobileNumber, address, photoUrl;
   LatLng position;
 
-  User.fromFirebase(this.userId, doc)
-      : email = doc['email'],
-        username = doc['username'],
-        address = doc['address'],
-        phoneNumber = doc['phoneNumber'],
-        position = LatLng(doc['lat'], doc['lng']);
+  User.fromFirestore(id, email, document)
+      : this.userName = document['username'],
+        this.mobileNumber = document['mobileNumber'],
+        this.address = document['address'],
+        this.photoUrl = document['photoUrl'],
+        this.position = LatLng(document['lat'], document['lng']),
+        this.userId = id,
+        this.email = email;
 
   User.fromUser(User user)
-      : this.userId = user.userId,
-        this.username = user.username,
+      : this.userName = user.userName,
+        this.mobileNumber = user.mobileNumber,
         this.address = user.address,
-        this.email = user.email,
-        this.phoneNumber = user.phoneNumber,
-        this.position = user.position;
+        this.photoUrl = user.photoUrl,
+        this.position = user.position,
+        this.userId = user.userId,
+        this.email = user.email;
 
   Future<void> init();
 }
